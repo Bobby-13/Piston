@@ -4,6 +4,7 @@ import com.example.CompilerApplication.model.dto.*;
 import com.example.CompilerApplication.model.entity.enums.Result;
 import com.example.CompilerApplication.model.entity.table.CodingResult;
 import com.example.CompilerApplication.repository.CodingResultRepository;
+import com.example.CompilerApplication.repository.service.Implementation.CodingResultRepositoryImplementation;
 import com.example.CompilerApplication.service.PistonService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,14 +24,13 @@ public class PistonServiceImplementation implements PistonService {
     public RestTemplate restTemplate;
 
     @Autowired
+    private CodingResultRepositoryImplementation codingResultRepositoryImplementation;
+    @Autowired
     private CodingResultRepository codingResultRepository;
 
     public PistonServiceImplementation(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
-
-
-
 
     public PistonResponse Compilation(CodeExecutionRequest codeExecutionRequest)
     {
@@ -74,17 +74,17 @@ public class PistonServiceImplementation implements PistonService {
     }
 
     @Override
-    public ResponseEntity<?> CodeExecution(CodeExecutionRequest codeExecutionRequest,String id,String round_id,String contest_id) {
+    public ResponseEntity<CodeExecutionResponse> CodeExecution(CodeExecutionRequest codeExecutionRequest,String id,String round_id,String contest_id) {
 
         String arr[] = {"5 2\n","5 4\n","5 1\n"};
         String opt[] = {"7\n","9\n","5\n"};
 
         PistonResponse output = Compilation(codeExecutionRequest);
 
+        System.out.println(output.getRun().getStdout());
         if(output.getRun().getSignal()!=null)
         {
             String err = output.getRun().getStderr();
-            System.out.println(err);
             return ResponseEntity.ok(CodeExecutionResponse.builder().message(err).testCase(null).build());
         }
         CodingResult codingResult =FetchResult(id,round_id);
@@ -189,7 +189,7 @@ public class PistonServiceImplementation implements PistonService {
 
 
     @Override
-    public ResponseEntity<?> CodeSubmission(CodeExecutionRequest codeExecutionRequest,String id,String round_id,String contest_id) {
+    public ResponseEntity<CodeExecutionResponse> CodeSubmission(CodeExecutionRequest codeExecutionRequest,String id,String round_id,String contest_id) {
 //        String arr[] = {"5 2\n","5 4\n","5 1\n","2 2\n","7 8\n","9 0\n","12 4\n","3 4\n","2 234\n","12 4\n","5 67\n"};
 //
 //        String opt[] = {"7\n","9\n","5\n","4\n","15\n","9\n","12\n","7\n","34\n","16\n","72\n"};
@@ -310,7 +310,7 @@ public class PistonServiceImplementation implements PistonService {
     }
 
     @Override
-    public ResponseEntity<?> FetchLanguages() {
+    public ResponseEntity<List<LanguageInfoResponse>> FetchLanguages() {
         String apiUrl = "http://127.0.0.1:2000/api/v2/runtimes";
 
         LanguageInfoDto[] languageInfoDto = restTemplate.getForObject(apiUrl, LanguageInfoDto[].class);
@@ -332,7 +332,7 @@ public class PistonServiceImplementation implements PistonService {
     }
 
     public CodingResult FetchResult(String userId,String round_id){
-       return codingResultRepository.findByUserIdAndRoundId(userId,round_id);
+       return codingResultRepositoryImplementation.findByUserIdAndRoundId(userId,round_id);
     }
 
     public double PercentageAverage(double val1,double val2){
