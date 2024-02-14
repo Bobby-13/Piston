@@ -11,6 +11,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.text.DecimalFormat;
 import java.util.*;
 
 
@@ -28,14 +29,15 @@ public class PistonServiceImplementation implements PistonService {
         this.restTemplate = restTemplate;
     }
 
-    @Override
-    public ResponseEntity<?> CodeExecution(CodeExecutionRequest codeExecutionRequest,String id,String round_id,String contest_id) {
 
+
+
+    public PistonResponse Compilation(CodeExecutionRequest codeExecutionRequest)
+    {
         String apiUrl = "http://127.0.0.1:2000/api/v2/execute";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-
         String arr[] = {"5 2\n","5 4\n","5 1\n"};
         String opt[] = {"7\n","9\n","5\n"};
 
@@ -44,7 +46,6 @@ public class PistonServiceImplementation implements PistonService {
         for(int i=0;i< arr.length;i++){
             input+=arr[i];
         }
-
         FileDetails fileDetails = FileDetails.builder()
                 .name(filename)
                 .content(codeExecutionRequest.getCode())
@@ -62,13 +63,23 @@ public class PistonServiceImplementation implements PistonService {
                 .runMemoryLimit(-1)
                 .build();
 
-
         HttpEntity<PistonRequest> requestEntity = new HttpEntity<>(pistonRequest, headers);
 
         ResponseEntity<PistonResponse> responseEntity = restTemplate.exchange(apiUrl, HttpMethod.POST, requestEntity, PistonResponse.class);
 
-
         PistonResponse output = responseEntity.getBody();
+
+
+        return output;
+    }
+
+    @Override
+    public ResponseEntity<?> CodeExecution(CodeExecutionRequest codeExecutionRequest,String id,String round_id,String contest_id) {
+
+        String arr[] = {"5 2\n","5 4\n","5 1\n"};
+        String opt[] = {"7\n","9\n","5\n"};
+
+        PistonResponse output = Compilation(codeExecutionRequest);
 
         if(output.getRun().getSignal()!=null)
         {
@@ -76,9 +87,7 @@ public class PistonServiceImplementation implements PistonService {
             System.out.println(err);
             return ResponseEntity.ok(CodeExecutionResponse.builder().message(err).testCase(null).build());
         }
-
         CodingResult codingResult =FetchResult(id,round_id);
-
         boolean isFirstEntry = false;
         if(codingResult==null){
             isFirstEntry = true;
@@ -121,7 +130,7 @@ public class PistonServiceImplementation implements PistonService {
 
              result.add(testCasesDto);
          }
-         String QuestionPercentage = PercentageCalculation(passCount, arr.length);
+         double QuestionPercentage = PercentageCalculation(passCount, arr.length);
 
         List<CodingQuestionDto> QuestionDto = null;
 
@@ -133,6 +142,7 @@ public class PistonServiceImplementation implements PistonService {
             QuestionDto = codingResult.getQuestion();
         }
 
+        double totalMarks = 0;
         boolean isQuestion = false;
         if(!QuestionDto.isEmpty()){
                 for (CodingQuestionDto question : QuestionDto) {
@@ -141,6 +151,20 @@ public class PistonServiceImplementation implements PistonService {
                         question.setCode(codeExecutionRequest.getCode());
                         question.setTestCases(result);
                         question.setScore(QuestionPercentage);
+                        if(totalMarks==0){
+                            totalMarks = question.getScore();
+                        }
+                        else {
+                            totalMarks = PercentageAverage(totalMarks, question.getScore());
+                        }
+                    }
+                    else{
+                        if(totalMarks==0){
+                            totalMarks = question.getScore();
+                        }
+                        else {
+                            totalMarks = PercentageAverage(totalMarks, question.getScore());
+                        }
                     }
                 }
         }
@@ -149,61 +173,31 @@ public class PistonServiceImplementation implements PistonService {
             QuestionDto.add(codingQuestionDto);
         }
 
-        if(!isQuestion)
+        if(!isQuestion && !isFirstEntry)
         {
             CodingQuestionDto codingQuestionDto = CodingQuestionDto.builder().questionId(codeExecutionRequest.getQuestionId()).code(codeExecutionRequest.getCode()).testCases(result).score(QuestionPercentage).build();
             QuestionDto.add(codingQuestionDto);
         }
 
         codingResult.setQuestion(QuestionDto);
+        codingResult.setTotalMarks(RoundToTwoDecimalPlaces(totalMarks));
 
         codingResultRepository.save(codingResult);
 
         return ResponseEntity.ok(CodeExecutionResponse.builder().message("Executed SuccessFully").testCase(result).build());
-
     }
+
 
     @Override
     public ResponseEntity<?> CodeSubmission(CodeExecutionRequest codeExecutionRequest,String id,String round_id,String contest_id) {
+//        String arr[] = {"5 2\n","5 4\n","5 1\n","2 2\n","7 8\n","9 0\n","12 4\n","3 4\n","2 234\n","12 4\n","5 67\n"};
+//
+//        String opt[] = {"7\n","9\n","5\n","4\n","15\n","9\n","12\n","7\n","34\n","16\n","72\n"};
 
-        String apiUrl = "http://127.0.0.1:2000/api/v2/execute";
+        String arr[] = {"5 2\n","5 4\n","5 1\n"};
+        String opt[] = {"7\n","8\n","5\n"};
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        String arr[] = {"5 2\n","5 4\n","5 1\n","2 2\n","7 8\n","9 0\n","12 4\n","3 4\n","2 234\n","12 4\n","5 67\n"};
-        String opt[] = {"7\n","9\n","5\n","4\n","15\n","9\n","12\n","7\n","34\n","16\n","72\n"};
-
-        String input = "";
-
-        for(int i=0;i< arr.length;i++){
-            input+=arr[i];
-        }
-
-        FileDetails fileDetails = FileDetails.builder()
-                .name(filename)
-                .content(codeExecutionRequest.getCode())
-                .build();
-
-        PistonRequest pistonRequest = PistonRequest.builder()
-                .files(List.of(fileDetails))
-                .language(codeExecutionRequest.getLanguage())
-                .version(codeExecutionRequest.getVersion())
-                .stdin(arr.length+" "+input)
-                .args(null)
-                .compileTimeout(10000)
-                .runTimeout(3000)
-                .compileMemoryLimit(-1)
-                .runMemoryLimit(-1)
-                .build();
-
-
-        HttpEntity<PistonRequest> requestEntity = new HttpEntity<>(pistonRequest, headers);
-
-        ResponseEntity<PistonResponse> responseEntity = restTemplate.exchange(apiUrl, HttpMethod.POST, requestEntity, PistonResponse.class);
-
-
-        PistonResponse output = responseEntity.getBody();
+        PistonResponse output = Compilation(codeExecutionRequest);
 
         if(output.getRun().getSignal()!=null)
         {
@@ -219,7 +213,6 @@ public class PistonServiceImplementation implements PistonService {
             isFirstEntry = true;
             codingResult = new CodingResult();
         }
-
 
         codingResult.setUserId(id);
         codingResult.setContestId(contest_id);
@@ -258,7 +251,7 @@ public class PistonServiceImplementation implements PistonService {
 
             hiddenTestCaseDto.add(HiddenTestCaseDto.builder().id(i+"").result(testCasesDto.getResult()).build());
         }
-        String QuestionPercentage = PercentageCalculation(passCount, arr.length);
+        double QuestionPercentage = PercentageCalculation(passCount, arr.length);
 
         List<CodingQuestionDto> QuestionDto = null;
 
@@ -270,6 +263,7 @@ public class PistonServiceImplementation implements PistonService {
             QuestionDto = codingResult.getQuestion();
         }
 
+        double totalMarks = 0;
         boolean isQuestion = false;
         if(!QuestionDto.isEmpty()){
             for (CodingQuestionDto question : QuestionDto) {
@@ -278,6 +272,20 @@ public class PistonServiceImplementation implements PistonService {
                     question.setCode(codeExecutionRequest.getCode());
                     question.setTestCases(result);
                     question.setScore(QuestionPercentage);
+                    if(totalMarks==0){
+                        totalMarks = question.getScore();
+                    }
+                    else {
+                        totalMarks = PercentageAverage(totalMarks, question.getScore());
+                    }
+                }
+                else{
+                    if(totalMarks==0){
+                        totalMarks = question.getScore();
+                    }
+                    else {
+                        totalMarks = PercentageAverage(totalMarks, question.getScore());
+                    }
                 }
             }
         }
@@ -286,13 +294,14 @@ public class PistonServiceImplementation implements PistonService {
             QuestionDto.add(codingQuestionDto);
         }
 
-        if(!isQuestion)
+        if(!isQuestion && !isFirstEntry)
         {
             CodingQuestionDto codingQuestionDto = CodingQuestionDto.builder().questionId(codeExecutionRequest.getQuestionId()).code(codeExecutionRequest.getCode()).testCases(result).score(QuestionPercentage).build();
             QuestionDto.add(codingQuestionDto);
         }
 
         codingResult.setQuestion(QuestionDto);
+        codingResult.setTotalMarks(RoundToTwoDecimalPlaces(totalMarks));
 
         codingResultRepository.save(codingResult);
 
@@ -313,12 +322,20 @@ public class PistonServiceImplementation implements PistonService {
         return ResponseEntity.ok(response);
     }
 
-    public String PercentageCalculation(int count,int total){
+    public double PercentageCalculation(int count,int total){
         double percentage = count*100/(total * 1.0);
-        return String.format("%.2f", percentage);
+        return RoundToTwoDecimalPlaces(percentage);
+    }
+
+    public static double RoundToTwoDecimalPlaces(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 
     public CodingResult FetchResult(String userId,String round_id){
        return codingResultRepository.findByUserIdAndRoundId(userId,round_id);
+    }
+
+    public double PercentageAverage(double val1,double val2){
+        return (val1 + val2)/2;
     }
 }

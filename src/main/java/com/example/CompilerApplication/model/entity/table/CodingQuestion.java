@@ -1,7 +1,6 @@
 package com.example.CompilerApplication.model.entity.table;
 
 
-import com.example.CompilerApplication.model.entity.enums.Category;
 import com.example.CompilerApplication.model.entity.enums.Difficulty;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
@@ -26,14 +25,12 @@ public class CodingQuestion {
     @Column(length = 1000)
     private String question;
 
-    @Column(length = 1000)
-    private String output;
-
-    @OneToMany
-    @JoinColumn(name = "Id")
+    @OneToMany(mappedBy = "codingQuestion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("codingQuestion")
     private List<CodingImageUrl> imageUrl;
 
-    @Enumerated(EnumType.STRING)
+    @ManyToOne
+    @JoinColumn(name = "categoryId")
     private Category category;
 
     @OneToMany(mappedBy = "codingQuestion", cascade = CascadeType.ALL, orphanRemoval = true)

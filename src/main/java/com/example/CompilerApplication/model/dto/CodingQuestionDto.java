@@ -17,5 +17,5 @@ public class CodingQuestionDto {
     private String questionId;
     private String code;
     private List<TestCasesDto> testCases;
-    private String score;
+    private double score;
 }

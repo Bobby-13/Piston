@@ -1,6 +1,6 @@
 package com.example.CompilerApplication.model.entity.enums;
 
-public enum Category {
+public enum QuestionCategory {
     APTITUDE_MCQ,
     LOGICAL_MCQ,
     VERBAL_MCQ,

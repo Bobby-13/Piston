@@ -26,5 +26,5 @@ public class CodingResult {
     private String roundId;
     private String userId;
     private List<CodingQuestionDto> question;
-    private String totalMarks;
+    private double totalMarks;
 }
