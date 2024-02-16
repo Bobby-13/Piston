@@ -39,4 +39,29 @@ public class CodingQuestion {
 
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
+
+
+    @Column(length = 1000)
+    @OneToMany(mappedBy = "codingQuestion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("codingQuestion")
+    private List<StaticCode> staticCodes;
+
+    @Column(length = 1000)
+    @OneToMany(mappedBy = "codingQuestion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("codingQuestion")
+    private List<FunctionCode> functionCodes;
+
+    @Override
+    public String toString() {
+        return "CodingQuestion{" +
+                "questionId=" + questionId +
+                ", question='" + question + '\'' +
+                ", imageUrl=" + imageUrl +
+                ", category=" + category +
+                ", casesList=" + casesList +
+                ", difficulty=" + difficulty +
+                ", staticCodes=" + staticCodes +
+                ", functionCodes=" + functionCodes +
+                '}';
+    }
 }

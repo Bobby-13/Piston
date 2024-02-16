@@ -26,4 +26,14 @@ public class Cases {
     @ManyToOne
     @JoinColumn(name = "question_id")
     private CodingQuestion codingQuestion;
+
+    @Override
+    public String toString() {
+        return "Cases{" +
+                "caseId=" + caseId +
+                ", input='" + input + '\'' +
+                ", output='" + output + '\'' +
+                ", casesType=" + casesType +
+                '}';
+    }
 }

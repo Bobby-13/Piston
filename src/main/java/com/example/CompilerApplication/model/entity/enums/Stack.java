@@ -1,7 +1,8 @@
 package com.example.CompilerApplication.model.entity.enums;
 
+public enum Stack {
 
-public enum Result {
-    PASS,
-    FAIL
+    JAVA,
+    PYTHON,
+    REACTJS
 }

@@ -21,7 +21,6 @@ public class CodingResult {
 
     @Id
     private String id;
-
     private String contestId;
     private String roundId;
     private String userId;

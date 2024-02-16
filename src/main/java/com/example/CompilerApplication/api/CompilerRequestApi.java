@@ -12,12 +12,18 @@ import java.util.List;
 @RequestMapping("/api/v2")
 public interface CompilerRequestApi {
 
-    @PostMapping("/compile/{id}/{round_id}/{contest_id}")
-    ResponseEntity<CodeExecutionResponse> ExecuteCode(@RequestBody CodeExecutionRequest request, @PathVariable String id, @PathVariable String round_id, @PathVariable String contest_id);
+    @PostMapping("/compile/{userId}/{roundId}/{contestId}")
+    ResponseEntity<CodeExecutionResponse> ExecuteCode(@RequestBody CodeExecutionRequest request, @PathVariable String userId, @PathVariable String roundId, @PathVariable String contestId);
 
-   @PostMapping("/submit/{id}/{round_id}/{contest_id}")
-    ResponseEntity<CodeExecutionResponse> SubmitCode(@RequestBody CodeExecutionRequest request,@PathVariable String id,@PathVariable String round_id,@PathVariable String contest_id);
+   @PostMapping("/submit/{userId}/{roundId}/{contestId}")
+    ResponseEntity<CodeExecutionResponse> SubmitCode(@RequestBody CodeExecutionRequest request, @PathVariable String userId, @PathVariable String roundId, @PathVariable String contestId);
 
    @GetMapping("/languages")
     ResponseEntity<List<LanguageInfoResponse>> FetchLanguages();
+
+   @GetMapping("/codingQuestion/{roundId}")
+    ResponseEntity<?> FetchCodingQuestion(@PathVariable String roundId);
+
+   @GetMapping("/draftCode/{userId}/{roundId}/{questionId}")
+    ResponseEntity<?> FetchDraftCode(@PathVariable String userId, @PathVariable String roundId, @PathVariable long questionId);
 }

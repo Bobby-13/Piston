@@ -11,9 +11,13 @@ import java.util.List;
 @Service
 public interface PistonService {
 
-    ResponseEntity<CodeExecutionResponse> CodeExecution(CodeExecutionRequest request, String id, String round_id, String contest_id);
+    ResponseEntity<CodeExecutionResponse> CodeExecution(CodeExecutionRequest request, String userId, String roundId, String contestId);
 
-    ResponseEntity<CodeExecutionResponse> CodeSubmission(CodeExecutionRequest request, String id, String round_id, String contest_id);
+    ResponseEntity<CodeExecutionResponse> CodeSubmission(CodeExecutionRequest request, String userId, String roundId, String contestId);
 
     ResponseEntity<List<LanguageInfoResponse>> FetchLanguages();
+
+    ResponseEntity<?> FetchCodingQuestion(String roundId);
+
+    ResponseEntity<?> FetchDraftCode(String userId, String roundId, long questionId);
 }

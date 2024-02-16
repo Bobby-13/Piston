@@ -9,10 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CodeExecutionRequest {
-    private long questionId;
-    private String code;
-    private String language;
-    private String version;
-    private String input;
-}
+public class CategoryDto {
+        private int categoryId;
+        private String category;
+
+    }
+

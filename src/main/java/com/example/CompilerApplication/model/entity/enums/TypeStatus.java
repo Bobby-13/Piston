@@ -1,7 +1,7 @@
 package com.example.CompilerApplication.model.entity.enums;
 
+public enum TypeStatus {
 
-public enum Result {
-    PASS,
-    FAIL
+    COMPLETED,
+    UNCOMPLETED
 }

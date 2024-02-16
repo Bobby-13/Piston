@@ -20,18 +20,28 @@ public class CompilerRequestController implements CompilerRequestApi {
     }
 
     @Override
-    public ResponseEntity<CodeExecutionResponse> ExecuteCode(CodeExecutionRequest request, String id, String round_id, String contest_id) {
-        return pistonService.CodeExecution(request,id,round_id,contest_id);
+    public ResponseEntity<CodeExecutionResponse> ExecuteCode(CodeExecutionRequest request, String userId, String roundId, String contestId) {
+        return pistonService.CodeExecution(request,userId,roundId,contestId);
     }
 
     @Override
-    public ResponseEntity<CodeExecutionResponse> SubmitCode(CodeExecutionRequest request,String id,String round_id,String contest_id) {
-        return pistonService.CodeSubmission(request,id,round_id,contest_id);
+    public ResponseEntity<CodeExecutionResponse> SubmitCode(CodeExecutionRequest request, String userId, String roundId, String contestId) {
+        return pistonService.CodeSubmission(request,userId,roundId,contestId);
     }
 
     @Override
     public ResponseEntity<List<LanguageInfoResponse>> FetchLanguages() {
         return pistonService.FetchLanguages();
+    }
+
+    @Override
+    public ResponseEntity<?> FetchCodingQuestion(String roundId) {
+        return pistonService.FetchCodingQuestion(roundId);
+    }
+
+    @Override
+    public ResponseEntity<?> FetchDraftCode(String userId, String roundId, long questionId) {
+        return pistonService.FetchDraftCode(userId,roundId,questionId);
     }
 
 }

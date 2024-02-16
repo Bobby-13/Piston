@@ -1,7 +1,9 @@
 package com.example.CompilerApplication.model.entity.enums;
 
+public enum CodeLanguage {
 
-public enum Result {
-    PASS,
-    FAIL
+    JAVA,
+    PYTHON,
+    C,
+    CPP
 }

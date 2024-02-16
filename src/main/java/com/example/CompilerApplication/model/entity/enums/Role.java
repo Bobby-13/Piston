@@ -1,7 +1,8 @@
 package com.example.CompilerApplication.model.entity.enums;
 
+public enum Role {
 
-public enum Result {
-    PASS,
-    FAIL
+    CONTESTANTS,
+    EMPLOYEE,
+    ADMIN
 }

@@ -1,7 +1,8 @@
 package com.example.CompilerApplication.model.entity.enums;
 
+public enum InterviewType {
 
-public enum Result {
-    PASS,
-    FAIL
+    TECHNICAL,
+    PERSONAL
+
 }

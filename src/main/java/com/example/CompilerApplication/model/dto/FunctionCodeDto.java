@@ -6,16 +6,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CodingQuestionDto {
-    private long questionId;
+public class FunctionCodeDto {
+    private long functionCodeId;
+    private CodeLanguage codeLanguage;
     private String code;
-    private String language;
-    private List<TestCasesDto> testCases;
-    private double score;
 }

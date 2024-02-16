@@ -1,7 +1,6 @@
 package com.example.CompilerApplication.model.entity.enums;
 
+public enum JobType {
 
-public enum Result {
-    PASS,
-    FAIL
+    INTERVIEW_REQUEST
 }
