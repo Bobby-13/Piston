@@ -19,7 +19,6 @@ import java.util.List;
 @NoArgsConstructor
 @Table(name = "round")
 public class Rounds {
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
@@ -60,5 +59,6 @@ public class Rounds {
     private LocalDateTime endTime;
 
     private int roundNumber;
+    private int passCount;
     private int pass;
 }

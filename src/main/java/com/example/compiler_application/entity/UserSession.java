@@ -18,10 +18,9 @@ import java.time.LocalDateTime;
 public class UserSession {
 
     @Id
-    private String sessionId;
+    private String uniqueId;
     private String roundId;
     private LocalDateTime loginTime;
     private LocalDateTime logoutTime;
-    private String userId;
-    private String uniqueId;
+    private String email;
 }

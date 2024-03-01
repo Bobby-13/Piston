@@ -1,5 +1,7 @@
 package com.example.compiler_application.dto;
 
+import com.example.compiler_application.util.enums.Difficulty;
+import com.example.compiler_application.util.enums.QuestionCategory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,4 +19,6 @@ public class CompilationRequestDto {
     private List<String> sampleOutput;
     private List<String> hiddenOutput;
     private List<StaticCodeDto> staticCodeDto;
+    private Difficulty difficulty;
+    private QuestionCategory questionCategory;
 }

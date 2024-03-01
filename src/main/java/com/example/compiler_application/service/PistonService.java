@@ -4,18 +4,18 @@ import com.example.compiler_application.dto.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 public interface PistonService {
 
-    ResponseEntity<CodeExecutionResponse> codeExecution(CodeExecutionRequest request, String userId, String roundId, String contestId);
+    ResponseEntity<ResponseDto> codeExecution(CodeExecutionRequest request, String userId, String roundId, String contestId);
 
-    ResponseEntity<CodeExecutionResponse> codeSubmission(CodeExecutionRequest request, String userId, String roundId, String contestId);
+    ResponseEntity<ResponseDto> codeSubmission(CodeExecutionRequest request, String userId, String roundId, String contestId);
 
-    ResponseEntity<List<LanguageInfoResponse>> fetchLanguages();
+    ResponseEntity<ResponseDto> fetchLanguages();
 
-    ResponseEntity<List<QuestionDto>> fetchCodingQuestion(String roundId);
+    ResponseEntity<ResponseDto> fetchCodingQuestion(String roundId);
 
-    ResponseEntity<List<DraftCodeResponseDto>> fetchDraftCode(String userId, String roundId, long questionId);
+    ResponseEntity<ResponseDto> fetchDraftCode(String userId, String roundId, long questionId);
+
+    ResponseEntity<ResponseDto> updateResult(String roundId, int passMark);
 }

@@ -18,28 +18,34 @@ public class CompilerRequestController implements CompilerRequestApi {
     }
 
     @Override
-    public ResponseEntity<CodeExecutionResponse> executeCode(CodeExecutionRequest request, String userId, String roundId, String contestId) {
+    public ResponseEntity<ResponseDto> executeCode(CodeExecutionRequest request, String userId, String roundId, String contestId) {
         return pistonService.codeExecution(request,userId,roundId,contestId);
     }
 
     @Override
-    public ResponseEntity<CodeExecutionResponse> submitCode(CodeExecutionRequest request, String userId, String roundId, String contestId) {
+    public ResponseEntity<ResponseDto> submitCode(CodeExecutionRequest request, String userId, String roundId, String contestId) {
         return pistonService.codeSubmission(request,userId,roundId,contestId);
     }
 
     @Override
-    public ResponseEntity<List<LanguageInfoResponse>> fetchLanguages() {
+    public ResponseEntity<ResponseDto> fetchLanguages() {
         return pistonService.fetchLanguages();
     }
 
     @Override
-    public ResponseEntity<List<QuestionDto>> fetchCodingQuestion(String roundId) {
+    public ResponseEntity<ResponseDto> fetchCodingQuestion(String roundId) {
         return pistonService.fetchCodingQuestion(roundId);
     }
 
     @Override
-    public ResponseEntity<List<DraftCodeResponseDto>> fetchDraftCode(String userId, String roundId, long questionId) {
+    public ResponseEntity<ResponseDto> fetchDraftCode(String userId, String roundId, long questionId) {
         return pistonService.fetchDraftCode(userId,roundId,questionId);
     }
+
+    @Override
+    public ResponseEntity<ResponseDto> updateResult(String roundId, int passMark) {
+        return pistonService.updateResult(roundId,passMark);
+    }
+
 
 }

@@ -23,4 +23,14 @@ public class CodingImageUrl {
     private CodingQuestion codingQuestion;
 
     private String url;
+    @Override
+    public String toString() {
+        return "CodingImageUrl{" +
+                "id=" + id +
+                ", codingQuestion=" + codingQuestion.getQuestionId() +
+                ", url='" + url + '\'' +
+                '}';
+    }
+
+
 }

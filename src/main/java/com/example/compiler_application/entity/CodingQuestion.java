@@ -25,6 +25,9 @@ public class CodingQuestion {
     @Column(length = 1000)
     private String question;
 
+    @Column(length = 1000)
+    private String constraints;
+
     @OneToMany(mappedBy = "codingQuestion", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("codingQuestion")
     private List<CodingImageUrl> imageUrl;

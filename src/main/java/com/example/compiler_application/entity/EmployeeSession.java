@@ -16,9 +16,8 @@ import java.time.LocalDateTime;
 public class EmployeeSession {
 
     @Id
-    private String sessionId;
+    private String uniqueId;
     private LocalDateTime loginTime;
     private LocalDateTime logoutTime;
     private String userId;
-    private String uniqueId;
 }
