@@ -1,7 +1,10 @@
 package com.example.compiler_application.configuration;
 
+import com.example.compiler_application.entity.UserSession;
+import com.example.compiler_application.repository.service.UserSessionRepositoryImplementation;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -12,30 +15,40 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 @Configuration
 @RequiredArgsConstructor
 public class AuthFilter extends OncePerRequestFilter {
+
+    private final UserSessionRepositoryImplementation userSessionRepositoryImplementation;
 
     private final JwtService jwtService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
+        if(request.getCookies() != null) {
+            String jwt = Arrays.stream(request.getCookies())
+                    .filter(cookie -> cookie.getName().equals("token"))
+                    .map(Cookie::getValue)
+                    .findFirst()
+                    .orElse(null);
+            String jit = null;
+            if(jwt != null) {
+                jit = jwtService.extractUsername(jwt);
+            }
 
-        if (authHeader == null || !authHeader.startsWith("Bearer")) {
-            filterChain.doFilter(request,response);
-            return;
+            UserSession session = userSessionRepositoryImplementation.findByUniqueId(jit).orElse(null);
+            if(session == null) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(jit,jwt,null);
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
-
-        String token = authHeader.substring(7);
-
-
-            if(jwtService.validateToken(token)){
-                Authentication authentication = new UsernamePasswordAuthenticationToken(null, null, null);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-        }
-      filterChain.doFilter(request,response);
+        filterChain.doFilter(request, response);
     }
 }

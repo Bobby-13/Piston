@@ -35,7 +35,6 @@ public class PistonServiceImplementation implements PistonService {
     private final CodingResultRepository codingResultRepository;
 
     private final UserRepositoryImplementation userRepositoryImplementation;
-    private final String sample = "sample";
 
     public PistonResponse compilation(CodeExecutionRequest codeExecutionRequest, CompilationRequestDto compilationRequestDto, String type) {
         String apiUrl = "http://127.0.0.1:2000/api/v2/execute";
@@ -45,7 +44,7 @@ public class PistonServiceImplementation implements PistonService {
 
         StringBuilder input = new StringBuilder();
 
-        if (type.equals(sample)) {
+        if (type.equals("sample")) {
             input.append(compilationRequestDto.getSampleInput().size()).append(" ");
             for (String sampleInput : compilationRequestDto.getSampleInput()) {
                 input.append(sampleInput).append(" ");
@@ -138,25 +137,26 @@ public class PistonServiceImplementation implements PistonService {
                 .build();
     }
 
-
-    public QuestionEvaluationDto codingQuestionEvaluation(List<CodingQuestionObject> questionDto, CodeExecutionRequest codeExecutionRequest, TestCaseEvaluationDto testCaseEvaluation, CompilationRequestDto compilationRequestDto) {
+    public QuestionEvaluationDto codingQuestionEvaluation(List<CodingQuestionObject> questionDto, CodeExecutionRequest codeExecutionRequest, TestCaseEvaluationDto testCaseEvaluation, CompilationRequestDto compilationRequestDto, Map<Difficulty, Integer> difficultyPercentage) {
 
         int totalMarks = 0;
         boolean isQuestion = false;
-        Map<Difficulty,String> questionDifficulty = new HashMap<>();
-        totalMarks = getTotalMarks(questionDto, codeExecutionRequest, testCaseEvaluation, compilationRequestDto, isQuestion, totalMarks);
+        QuestionCredentialsDto questionCredentialsDto = getTotalMarks(questionDto, codeExecutionRequest, testCaseEvaluation, compilationRequestDto, isQuestion, totalMarks, difficultyPercentage);
 
 
         return QuestionEvaluationDto.builder()
                 .questionObjectList(questionDto)
-                .totalMarks(totalMarks)
+                .totalMarks(questionCredentialsDto.getTotalMarks())
+                .questionDifficulty(questionCredentialsDto.getQuestionDifficulty())
                 .build();
     }
 
-    private int getTotalMarks(List<CodingQuestionObject> questionDto, CodeExecutionRequest codeExecutionRequest, TestCaseEvaluationDto testCaseEvaluation, CompilationRequestDto compilationRequestDto, boolean isQuestion, int totalMarks) {
+    private QuestionCredentialsDto getTotalMarks(List<CodingQuestionObject> questionDto, CodeExecutionRequest codeExecutionRequest, TestCaseEvaluationDto testCaseEvaluation, CompilationRequestDto compilationRequestDto, boolean isQuestion, int totalMarks, Map<Difficulty, Integer> difficultyPercentage) {
+
         if (!questionDto.isEmpty()) {
             for (CodingQuestionObject question : questionDto) {
                 if (codeExecutionRequest.getQuestionId() == question.getQuestionId()) {
+
                     isQuestion = true;
                     question.setCode(codeExecutionRequest.getCode());
                     question.setLanguage(codeExecutionRequest.getLanguage());
@@ -166,18 +166,20 @@ public class PistonServiceImplementation implements PistonService {
                     question.setTestCaseCount(testCaseEvaluation.getTestCaseCount());
                     question.setDifficulty(compilationRequestDto.getDifficulty());
                     question.setQuestionCategory(compilationRequestDto.getQuestionCategory());
-                    if (totalMarks == 0) {
 
+                    if (totalMarks == 0) {
+                        difficultyPercentage.put(question.getDifficulty(), question.getScore());
                         totalMarks = question.getScore();
                     } else {
-
+                        difficultyPercentage.put(question.getDifficulty(), percentageAverage(difficultyPercentage.get(question.getDifficulty()), question.getScore()));
                         totalMarks = percentageAverage(totalMarks, question.getScore());
                     }
-                }
-                else {
+                } else {
                     if (totalMarks == 0) {
+                        difficultyPercentage.put(question.getDifficulty(), question.getScore());
                         totalMarks = question.getScore();
                     } else {
+                        difficultyPercentage.put(question.getDifficulty(), percentageAverage(difficultyPercentage.get(question.getDifficulty()), question.getScore()));
                         totalMarks = percentageAverage(totalMarks, question.getScore());
                     }
                 }
@@ -185,14 +187,20 @@ public class PistonServiceImplementation implements PistonService {
         } else {
             CodingQuestionObject codingQuestionObject = CodingQuestionObject.builder().questionId(codeExecutionRequest.getQuestionId()).code(codeExecutionRequest.getCode()).testCases(testCaseEvaluation.getTestCases()).score(testCaseEvaluation.getPassPercentage()).testCaseCount(testCaseEvaluation.getTestCaseCount()).passCount(testCaseEvaluation.getPassCount()).build();
             questionDto.add(codingQuestionObject);
+            difficultyPercentage.put(compilationRequestDto.getDifficulty(), testCaseEvaluation.getPassPercentage());
             totalMarks = testCaseEvaluation.getPassPercentage();
         }
         if (!isQuestion && questionDto.isEmpty()) {
             CodingQuestionObject codingQuestionObject = CodingQuestionObject.builder().questionId(codeExecutionRequest.getQuestionId()).code(codeExecutionRequest.getCode()).testCases(testCaseEvaluation.getTestCases()).score(testCaseEvaluation.getPassPercentage()).testCaseCount(testCaseEvaluation.getTestCaseCount()).passCount(testCaseEvaluation.getPassCount()).build();
             questionDto.add(codingQuestionObject);
+            difficultyPercentage.put(compilationRequestDto.getDifficulty(), testCaseEvaluation.getPassPercentage());
             totalMarks = testCaseEvaluation.getPassPercentage();
         }
-        return totalMarks;
+
+        return QuestionCredentialsDto.builder()
+                .totalMarks(totalMarks)
+                .questionDifficulty(difficultyPercentage)
+                .build();
     }
 
     @Override
@@ -200,7 +208,7 @@ public class PistonServiceImplementation implements PistonService {
         try {
             CompilationRequestDto compilationRequestDto = fetchCodingQuestionCases(roundId, codeExecutionRequest.getQuestionId());
 
-            PistonResponse output = compilation(codeExecutionRequest, compilationRequestDto, sample);
+            PistonResponse output = compilation(codeExecutionRequest, compilationRequestDto, "sample");
 
             Map<String, Object> map = userOutput(output);
 
@@ -214,17 +222,19 @@ public class PistonServiceImplementation implements PistonService {
             if (codingResult == null) {
                 questionDto = new ArrayList<>();
                 codingResult = new CodingResult();
+
             } else {
                 questionDto = codingResult.getQuestion();
             }
 
+            Map<Difficulty,Integer> questionDifficulty = new LinkedHashMap<>();
             codingResult.setUserId(userId);
             codingResult.setContestId(contestId);
             codingResult.setRoundId(roundId);
 
             TestCaseEvaluationDto testCaseEvaluation = testCaseEvaluation(map, compilationRequestDto);
 
-            QuestionEvaluationDto questionValidation = codingQuestionEvaluation(questionDto, codeExecutionRequest, testCaseEvaluation, compilationRequestDto);
+            QuestionEvaluationDto questionValidation = codingQuestionEvaluation(questionDto, codeExecutionRequest, testCaseEvaluation, compilationRequestDto, questionDifficulty );
 
             codingResult.setQuestion(questionValidation.getQuestionObjectList());
             codingResult.setPercentage(null);
@@ -263,7 +273,7 @@ public class PistonServiceImplementation implements PistonService {
             }
 
             CompilationRequestDto compilationRequestDto = fetchCodingQuestionCases(roundId, codeExecutionRequest.getQuestionId());
-            PistonResponse output = compilation(codeExecutionRequest, compilationRequestDto, sample);
+            PistonResponse output = compilation(codeExecutionRequest, compilationRequestDto, "sample");
 
             Map<String, Object> map = userOutput(output);
 
@@ -277,7 +287,24 @@ public class PistonServiceImplementation implements PistonService {
             if (codingResult == null) {
                 questionDto = new ArrayList<>();
                 codingResult = new CodingResult();
+
+                codingResult.setPercentage(new LinkedHashMap<>());
             } else {
+                if(codingResult.getPercentage() == null){
+                    LinkedHashMap<Difficulty, Integer> difficultyPercentage = new LinkedHashMap<>();
+                    if (easy > 0) {
+                        difficultyPercentage.put(Difficulty.EASY, 0);
+                    }
+
+                    if (medium > 0) {
+                        difficultyPercentage.put(Difficulty.MEDIUM, 0);
+                    }
+
+                    if (hard > 0) {
+                        difficultyPercentage.put(Difficulty.HARD, 0);
+                    }
+                    codingResult.setPercentage(difficultyPercentage);
+                }
                 questionDto = codingResult.getQuestion();
             }
 
@@ -295,47 +322,11 @@ public class PistonServiceImplementation implements PistonService {
             }
 
 
-            QuestionEvaluationDto questionValidation = codingQuestionEvaluation(questionDto, codeExecutionRequest, testCaseEvaluation, compilationRequestDto);
+            QuestionEvaluationDto questionValidation = codingQuestionEvaluation(questionDto, codeExecutionRequest, testCaseEvaluation, compilationRequestDto, codingResult.getPercentage());
 
             codingResult.setQuestion(questionValidation.getQuestionObjectList());
 
-            Map<Difficulty, Integer> percentage = codingResult.getPercentage();
-            Map<Difficulty, Integer> difficultyPercentage = new HashMap<>();
-            Difficulty questionDifficulty = compilationRequestDto.getDifficulty();
-
-             if (percentage != null) {
-                if (percentage.containsKey(Difficulty.EASY)) {
-                    if (Difficulty.EASY.equals(questionDifficulty)) {
-                        if (percentage.get(Difficulty.EASY) != 0) {
-                            int val = percentage.get(Difficulty.EASY);
-                            difficultyPercentage.put(compilationRequestDto.getDifficulty(), percentageAverage(val, questionValidation.getTotalMarks()));
-                        } else {
-                            difficultyPercentage.put(Difficulty.EASY, questionValidation.getTotalMarks());
-                        }
-                    } else if (Difficulty.MEDIUM.equals(questionDifficulty)) {
-                        if (percentage.get(Difficulty.MEDIUM) != 0) {
-                            int val = percentage.get(Difficulty.MEDIUM);
-                            difficultyPercentage.put(compilationRequestDto.getDifficulty(), percentageAverage(val, questionValidation.getTotalMarks()));
-                        } else {
-                            difficultyPercentage.put(Difficulty.MEDIUM, questionValidation.getTotalMarks());
-                        }
-                    } else {
-                        if (percentage.get(Difficulty.HARD) != 0) {
-                            int val = percentage.get(Difficulty.HARD);
-                            difficultyPercentage.put(compilationRequestDto.getDifficulty(), percentageAverage(val, questionValidation.getTotalMarks()));
-                        } else {
-                            difficultyPercentage.put(Difficulty.HARD, questionValidation.getTotalMarks());
-                        }
-                    }
-                }
-            }
-             else{
-                     difficultyPercentage.put(compilationRequestDto.getDifficulty(), questionValidation.getTotalMarks());
-             }
-
-
-            codingResult.setPercentage(difficultyPercentage);
-
+            codingResult.setPercentage(questionValidation.getQuestionDifficulty());
 
             if (compilationRequestDto.getDifficulty().equals(Difficulty.EASY)) {
                 codingResult.setTotalScore(totalScoreEvaluation(easy, medium, hard, questionValidation.getTotalMarks()));
@@ -346,7 +337,7 @@ public class PistonServiceImplementation implements PistonService {
             }
 
 
-            codingResult.setResult(codingRoundResult(userId,roundId, questionValidation.getTotalMarks()));
+            codingResult.setResult(codingRoundResult(userId, roundId, questionValidation.getTotalMarks()));
 
             codingResultRepository.save(codingResult);
 
@@ -471,7 +462,7 @@ public class PistonServiceImplementation implements PistonService {
 
         for (CodingResult codingResult : codingResultList) {
 
-         User user = userRepositoryImplementation.getUserById(codingResult.getUserId());
+            User user = userRepositoryImplementation.getUserById(codingResult.getUserId());
 
             if (codingResult.getTotalScore() >= passMark) {
                 user.setPassed(true);
@@ -558,15 +549,15 @@ public class PistonServiceImplementation implements PistonService {
     }
 
 
-    public Result codingRoundResult(String userId,String roundId, double total) {
+    public Result codingRoundResult(String userId, String roundId, double total) {
 
         int passValue = roundsRepositoryImplementation.getPassMark(roundId);
 
         User user = userRepositoryImplementation.getUserById(userId);
 
         if (total >= passValue) {
-             user.setPassed(true);
-             userRepositoryImplementation.updateUserByResult(user);
+            user.setPassed(true);
+            userRepositoryImplementation.updateUserByResult(user);
             return Result.PASS;
         } else {
             user.setPassed(false);
